@@ -49,11 +49,8 @@ class LoadModel {
             case 'fbx':
                 this.fbxLoader.load(path, (obj) => {
                     console.log(obj);
-                    models[modelname] = obj;
+                    models[modelname] = new ModelControler(obj);
                     this.scene.add(obj);
-                    this.fbxLoader.parse(obj, (res) => {
-                        console.log(res);
-                    })
                     // 遍历模型的子对象
                     obj.traverse((child) => {
                         if (child.isMesh) {
@@ -77,7 +74,7 @@ class LoadModel {
             case 'glb':
                 this.gltfLoader.load(path, (obj) => {
                     console.log(obj.scene);
-                    models[modelname] = obj.scene;
+                    models[modelname] = new ModelControler(obj.scene);
                     this.scene.add(obj.scene);
                 })
                 break;
@@ -85,10 +82,11 @@ class LoadModel {
     }
 }
 
-class Model {
+class ModelControler {
     constructor(obj, speed = 0.1) {
         this.obj = obj;
         this.speed = speed;
+        this.mixer = new THREE.AnimationMixer(obj);
     }
     moveStraight(length) {
         const time = setInterval(() => {
@@ -96,6 +94,24 @@ class Model {
             length -= this.speed;
             if (length <= 0) clearInterval(time);
         }, 1);
+    }
+
+    rotate(angle) {
+        // 正数逆时针转，负数顺时针转
+        const time = setInterval(() => {
+            this.obj.rotation.y += this.speed;
+            angle -= this.speed;
+            if (angle <= 0) clearInterval(time);
+        }, 1);
+    }
+
+    animationPlay(name) {
+        const clip = THREE.AnimationClip.findByName(this.obj.animations, name);
+        if (!clip) throw new Error("Animation clip not found");
+        const action = this.mixer.clipAction(clip); // 返回动画操作器对象
+        action.clampWhenFinished = true; // 动画结束后保持最后一帧
+        action.loop = THREE.LoopOnce; // 只播放一次
+        action.play();
     }
 }
 
@@ -134,14 +150,6 @@ function initCamera() {
         4000
     );
     camera.position.set(100, 100, 100);
-
-    // ? 相机控件操控镜头
-    // // 设置相机控件轨道控制器OrbitControls
-    // const controls = new OrbitControls(camera, renderer.domElement);
-    // // 如果OrbitControls改变了相机参数，重新调用渲染器渲染三维场景
-    // controls.addEventListener('change', function () {
-    //     renderer.render(scene, camera); //执行渲染操作
-    // });
 
     // ? 监听鼠标、键盘事件
     let cameraSpeed = 10;
@@ -229,7 +237,7 @@ function initLight() {
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // 第一个参数是颜色，第二个参数是光照强度
     directionalLight.position.set(1, 1, 1); // 设置光源位置
     scene.add(directionalLight);
-    gui.add(directionalLight, 'intensity', 0, 10000).name("光照强度");
+    gui.add(directionalLight, 'intensity', 0, 10).name("光照强度");
     gui.add(directionalLight.position, 'y', -100, 1000).name("光源高度").step(0.1);
     scene.add(directionalLight);
 }
@@ -276,10 +284,11 @@ function initAnimation() {
     // 改变叉车整体缩放，添加gui控制
 
     gui.add(controls, 'scale', 0, 1).onChange((value) => {
-        models["car"].scale.set(value, value, value);
+        models["car"].obj.scale.set(value, value, value);
     })
-    mixer = new THREE.AnimationMixer(models["car"]);
-    const clip = THREE.AnimationClip.findByName(models["car"].animations, "Cube_13_2|Cube_13_2Action");
+    gui.add(models["car"].obj.rotation, 'y', -3.14, 3.14).step(0.01);
+    mixer = new THREE.AnimationMixer(models["car"].obj);
+    const clip = THREE.AnimationClip.findByName(models["car"].obj.animations, "Cube_13_2|Cube_13_2Action");
     const AnimationAction = mixer.clipAction(clip).play();
     AnimationAction.clampWhenFinished = true;
     AnimationAction.loop = THREE.LoopOnce;
@@ -319,14 +328,14 @@ function test01() {
     initAnimation();
     // gui.add(camera, 'fov', 1, 100).onChange(updateCamera).name("FOV").step(0.1);
     // 经过测试厂房的最佳高度为-200
-    models["Warahouse"].position.y = -200;
-    models["car"].position.x = 200;
-    models["car"].scale.set(0.2, 0.2, 0.2);
-    models["保温炉"].position.set(200, 0, -100);
-    gui.add(models["保温炉"].position, 'x', -200, 200).name("保温炉x坐标").onChange((value) => {
-        models["保温炉"].position.x = value;
+    models["Warahouse"].obj.position.y = -200;
+    models["car"].obj.position.x = 200;
+    models["car"].obj.scale.set(0.2, 0.2, 0.2);
+    models["保温炉"].obj.position.set(200, 0, -100);
+    gui.add(models["保温炉"].obj.position, 'x', -200, 200).name("保温炉x坐标").onChange((value) => {
+        models["保温炉"].obj.position.x = value;
     })
-    gui.add(models["保温炉"].position, 'y', -200, 200).name("保温炉y坐标").onChange((value) => {
-        models["保温炉"].position.y = value;
+    gui.add(models["保温炉"].obj.position, 'y', -200, 200).name("保温炉y坐标").onChange((value) => {
+        models["保温炉"].obj.position.y = value;
     })
 }
