@@ -14,6 +14,7 @@ let scene = null;
 let camera = null
 let renderer = null;
 const gui = new GUI();
+let mixer = null;
 // const fbxLoader = new FBXLoader();
 // const gltfLoader = new GLTFLoader();
 // const modelPath = ['./models/LK/dcc800_0524_1.fbx', './models/LK/factory1.obj', './models/LK/Warahouse.fbx', './models/LK/上部防护罩.fbx', './models/LK/侧面围挡+门.fbx', './models/LK/保温炉.fbx', './models/LK/压射杆后端2 1.fbx', './models/LK/压射杆后端2.fbx', './models/LK/压铸机_喷雾机器人.fbx', './models/LK/尾板+哥林柱2.fbx', './models/LK/活塞杆后端.fbx', './models/LK/给汤机_坐标调整.fbx'];
@@ -191,12 +192,6 @@ function initCamera() {
     });
 
     let isDragging = false;
-    let previousMousePosition = {
-        x: 0,
-        y: 0
-    };
-    // let minVerticalRotation = -Math.PI / 2 + 0.01; // 最小垂直旋转角度
-    // let maxVerticalRotation = Math.PI / 2 - 0.01;  // 最大垂直旋转角度
 
     document.addEventListener('mousedown', function (e) {
         isDragging = true;
@@ -260,10 +255,50 @@ function initModels() {
 }
 
 
+const deltaTime = 0.01;
 // render
 function animate() {
+    checkAnimation();
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
+}
+
+function checkAnimation() {
+    if (mixer) mixer.update(deltaTime);
+}
+
+// 创建一个对象来存储控制参数
+var controls = {
+    scale: 1
+};
+
+function initAnimation() {
+    // 改变叉车整体缩放，添加gui控制
+
+    gui.add(controls, 'scale', 0, 1).onChange((value) => {
+        models["car"].scale.set(value, value, value);
+    })
+    mixer = new THREE.AnimationMixer(models["car"]);
+    const clip = THREE.AnimationClip.findByName(models["car"].animations, "Cube_13_2|Cube_13_2Action");
+    const AnimationAction = mixer.clipAction(clip).play();
+    AnimationAction.clampWhenFinished = true;
+    AnimationAction.loop = THREE.LoopOnce;
+    AnimationAction.play();
+
+    // 添加动画播放完成事件监听器
+    mixer.addEventListener('finished', function (event) {
+        // 当动画播放完成时，切换动画播放方向并重新播放动画
+        var animationAction = event.action; // 获取触发事件的动画动作
+
+        // 切换动画的播放方向
+        if (animationAction.timeScale > 0) {
+            animationAction.timeScale = -1; // 反向播放
+        } else {
+            animationAction.timeScale = 1; // 正向播放
+        }
+
+        animationAction.paused = false; // 重新播放动画
+    });
 }
 
 // ! 测试
@@ -277,19 +312,21 @@ function Test() {
     scene.add(planeMesh);
     setTimeout(() => {
         test01();
-    }, 1000);
+    }, 5000);
 }
 
 function test01() {
-    console.log(models["Warahouse"]);
+    initAnimation();
     // gui.add(camera, 'fov', 1, 100).onChange(updateCamera).name("FOV").step(0.1);
     // 经过测试厂房的最佳高度为-200
     models["Warahouse"].position.y = -200;
+    models["car"].position.x = 200;
+    models["car"].scale.set(0.2, 0.2, 0.2);
     models["保温炉"].position.set(200, 0, -100);
-    gui.add(models["保温炉"].position, 'x', -200, 200).onChange((value) => {
+    gui.add(models["保温炉"].position, 'x', -200, 200).name("保温炉x坐标").onChange((value) => {
         models["保温炉"].position.x = value;
     })
-    gui.add(models["保温炉"].position, 'y', -200, 200).onChange((value) => {
+    gui.add(models["保温炉"].position, 'y', -200, 200).name("保温炉y坐标").onChange((value) => {
         models["保温炉"].position.y = value;
     })
 }
