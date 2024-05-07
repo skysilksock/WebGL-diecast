@@ -101,6 +101,7 @@ class ModelControler {
         const time = setInterval(() => {
             this.obj.rotation.y += this.speed;
             angle -= this.speed;
+            console.log(angle);
             if (angle <= 0) clearInterval(time);
         }, 1);
     }
@@ -332,6 +333,7 @@ function test01() {
     models["car"].obj.position.x = 200;
     models["car"].obj.scale.set(0.2, 0.2, 0.2);
     models["保温炉"].obj.position.set(200, 0, -100);
+    models["car"].rotate(Math.pi / 2);
     gui.add(models["保温炉"].obj.position, 'x', -200, 200).name("保温炉x坐标").onChange((value) => {
         models["保温炉"].obj.position.x = value;
     })
