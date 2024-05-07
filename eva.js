@@ -119,16 +119,7 @@ class ModelControler {
         }
     }
 
-<<<<<<< HEAD
-    rotate(angle) {
-        // 正数逆时针转，负数顺时针转
-        const time = setInterval(() => {
-            this.obj.rotation.y += this.speed;
-            angle -= this.speed;
-            console.log(angle);
-            if (angle <= 0) clearInterval(time);
-        }, 1);
-=======
+
     async rotate(angle, speed = 0.01) {
         if (!angle) throw new Error("Angle not provided");
 
@@ -140,7 +131,6 @@ class ModelControler {
             this.obj.rotation.y += speed * sign;
             angle -= speed;
         }
->>>>>>> master
     }
 
 
@@ -263,15 +253,11 @@ async function test01() {
     models["car"].obj.position.x = 200;
     models["car"].obj.scale.set(0.2, 0.2, 0.2);
     models["保温炉"].obj.position.set(200, 0, -100);
-<<<<<<< HEAD
-    models["car"].rotate(Math.pi / 2);
-=======
     await models["car"].moveStraight(100, [1, 0, 0]);
     await models["car"].rotate(Math.PI / 2);
     // models["car"].animationPlay("Cube_13_2|Cube_13_2Action");
     models["car"].moveStraight(100, [0, 0, -1]);
     models["保温炉"].moveStraight(100, [0, 1, 0]);
->>>>>>> master
     gui.add(models["保温炉"].obj.position, 'x', -200, 200).name("保温炉x坐标").onChange((value) => {
         models["保温炉"].obj.position.x = value;
     })
