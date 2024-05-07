@@ -89,36 +89,49 @@ class ModelControler {
         this.obj = obj;
         this.speed = speed;
         this.mixer = new THREE.AnimationMixer(obj);
+        this.space = 1;
     }
-    async moveStraight(length) {
-        if (!length) throw new Error("class ModelControler function moveStraight no length");
-        const Direction = new THREE.Vector3();
-        this.obj.getWorldDirection(Direction);
-        const [dx, dy, dz] = [Direction.x, Direction.y, Direction.z];
+
+    async moveStraight(length, vec3 = null) {
+        if (!length) throw new Error("Length not provided");
+        let dx, dy, dz;
+        if (!vec3) {
+            const direction = new THREE.Vector3();
+            this.obj.getWorldDirection(direction);
+            dx = direction.x;
+            dy = direction.y;
+            dz = direction.z;
+        }
+        else {
+            [dx, dy, dz] = vec3;
+        }
+
         const sign = Math.sign(length);
         length = Math.abs(length);
-        if (length > 0) {
-            const time = setInterval(() => {
-                this.obj.position.x += this.speed * dx * sign;
-                this.obj.position.y += this.speed * dy * sign;
-                this.obj.position.z += this.speed * dz * sign;
-                length -= this.speed;
-                if (length <= 0) clearInterval(time);
-            }, 1);
+
+        while (length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1)); // 等待1毫秒
+            console.log(dx, dy, dz);
+            this.obj.position.x += this.speed * dx * sign;
+            this.obj.position.y += this.speed * dy * sign;
+            this.obj.position.z += this.speed * dz * sign;
+            length -= this.speed;
         }
     }
 
     async rotate(angle, speed = 0.01) {
-        if (!angle) throw new Error("class ModelControler function rotate no angle");
-        // 正数逆时针转，负数顺时针转
+        if (!angle) throw new Error("Angle not provided");
+
         const sign = Math.sign(angle);
         angle = Math.abs(angle);
-        const time = setInterval(() => {
+
+        while (angle > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1)); // 等待1毫秒
             this.obj.rotation.y += speed * sign;
             angle -= speed;
-            if (angle <= 0) clearInterval(time);
-        }, 1)
+        }
     }
+
 
     animationPlay(name) {
         if (mixers.indexOf(this.mixer) == -1) mixers.push(this.mixer);
@@ -217,30 +230,6 @@ var controls = {
     scale: 1
 };
 
-function initAnimation() {
-    mixer = new THREE.AnimationMixer(models["car"].obj);
-    const clip = THREE.AnimationClip.findByName(models["car"].obj.animations, "Cube_13_2|Cube_13_2Action");
-    const AnimationAction = mixer.clipAction(clip);
-    AnimationAction.clampWhenFinished = true;
-    AnimationAction.loop = THREE.LoopOnce;
-    AnimationAction.play();
-    console.log(AnimationAction);
-    // 添加动画播放完成事件监听器
-    mixer.addEventListener('finished', function (event) {
-        // 当动画播放完成时，切换动画播放方向并重新播放动画
-        var animationAction = event.action; // 获取触发事件的动画动作
-
-        // 切换动画的播放方向
-        if (animationAction.timeScale > 0) {
-            animationAction.timeScale = -1; // 反向播放
-        } else {
-            animationAction.timeScale = 1; // 正向播放
-        }
-
-        // animationAction.paused = false; // 重新播放动画
-    });
-}
-
 // ! 测试
 
 function Test() {
@@ -255,7 +244,7 @@ function Test() {
     }, 5000);
 }
 
-function test01() {
+async function test01() {
     // initAnimation();
     // gui.add(camera, 'fov', 1, 100).onChange(updateCamera).name("FOV").step(0.1);
     // 经过测试厂房的最佳高度为-200
@@ -263,9 +252,11 @@ function test01() {
     models["car"].obj.position.x = 200;
     models["car"].obj.scale.set(0.2, 0.2, 0.2);
     models["保温炉"].obj.position.set(200, 0, -100);
-    models["car"].rotate(Math.PI / 2);
-    models["car"].moveStraight(-100);
-    models["car"].animationPlay("Cube_13_2|Cube_13_2Action");
+    await models["car"].moveStraight(100, [1, 0, 0]);
+    await models["car"].rotate(Math.PI / 2);
+    // models["car"].animationPlay("Cube_13_2|Cube_13_2Action");
+    models["car"].moveStraight(100, [0, 0, -1]);
+    models["保温炉"].moveStraight(100, [0, 1, 0]);
     gui.add(models["保温炉"].obj.position, 'x', -200, 200).name("保温炉x坐标").onChange((value) => {
         models["保温炉"].obj.position.x = value;
     })
