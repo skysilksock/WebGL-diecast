@@ -6,6 +6,8 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { abs } from 'three/examples/jsm/nodes/Nodes.js';
+import { initCamera } from "./js/camera.js";
 
 
 
@@ -14,7 +16,7 @@ let scene = null;
 let camera = null
 let renderer = null;
 const gui = new GUI();
-let mixer = null;
+const mixers = [];
 // const fbxLoader = new FBXLoader();
 // const gltfLoader = new GLTFLoader();
 // const modelPath = ['./models/LK/dcc800_0524_1.fbx', './models/LK/factory1.obj', './models/LK/Warahouse.fbx', './models/LK/上部防护罩.fbx', './models/LK/侧面围挡+门.fbx', './models/LK/保温炉.fbx', './models/LK/压射杆后端2 1.fbx', './models/LK/压射杆后端2.fbx', './models/LK/压铸机_喷雾机器人.fbx', './models/LK/尾板+哥林柱2.fbx', './models/LK/活塞杆后端.fbx', './models/LK/给汤机_坐标调整.fbx'];
@@ -88,24 +90,38 @@ class ModelControler {
         this.speed = speed;
         this.mixer = new THREE.AnimationMixer(obj);
     }
-    moveStraight(length) {
-        const time = setInterval(() => {
-            this.obj.position.z += this.speed;
-            length -= this.speed;
-            if (length <= 0) clearInterval(time);
-        }, 1);
+    async moveStraight(length) {
+        if (!length) throw new Error("class ModelControler function moveStraight no length");
+        const Direction = new THREE.Vector3();
+        this.obj.getWorldDirection(Direction);
+        const [dx, dy, dz] = [Direction.x, Direction.y, Direction.z];
+        const sign = Math.sign(length);
+        length = Math.abs(length);
+        if (length > 0) {
+            const time = setInterval(() => {
+                this.obj.position.x += this.speed * dx * sign;
+                this.obj.position.y += this.speed * dy * sign;
+                this.obj.position.z += this.speed * dz * sign;
+                length -= this.speed;
+                if (length <= 0) clearInterval(time);
+            }, 1);
+        }
     }
 
-    rotate(angle) {
+    async rotate(angle, speed = 0.01) {
+        if (!angle) throw new Error("class ModelControler function rotate no angle");
         // 正数逆时针转，负数顺时针转
+        const sign = Math.sign(angle);
+        angle = Math.abs(angle);
         const time = setInterval(() => {
-            this.obj.rotation.y += this.speed;
-            angle -= this.speed;
+            this.obj.rotation.y += speed * sign;
+            angle -= speed;
             if (angle <= 0) clearInterval(time);
-        }, 1);
+        }, 1)
     }
 
     animationPlay(name) {
+        if (mixers.indexOf(this.mixer) == -1) mixers.push(this.mixer);
         const clip = THREE.AnimationClip.findByName(this.obj.animations, name);
         if (!clip) throw new Error("Animation clip not found");
         const action = this.mixer.clipAction(clip); // 返回动画操作器对象
@@ -125,7 +141,7 @@ function LoadTHREE() {
     // 灯光
     initLight();
     // 相机
-    initCamera();
+    camera = initCamera();
     // 天空盒纹理加载
     // initSkyBox();
     // 加载模型
@@ -141,86 +157,7 @@ function initScene() {
     scene = new THREE.Scene();
 }
 
-function initCamera() {
-    // 相机初始化
-    camera = new THREE.PerspectiveCamera(
-        45, // FOV
-        window.innerWidth / window.innerHeight,
-        0.1,
-        4000
-    );
-    camera.position.set(100, 100, 100);
 
-    // ? 监听鼠标、键盘事件
-    let cameraSpeed = 10;
-    function cameraMove(dx, dy, dz) {
-        camera.position.x += dx * cameraSpeed;
-        camera.position.y += dy * cameraSpeed;
-        camera.position.z += dz * cameraSpeed;
-    }
-
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'w') {
-            const cameraDirection = new THREE.Vector3();
-            camera.getWorldDirection(cameraDirection);
-            const [dx, dy, dz] = [cameraDirection.x, cameraDirection.y, cameraDirection.z];
-            cameraMove(dx, dy, dz);
-        } else if (event.key === 's') {
-            const cameraDirection = new THREE.Vector3();
-            camera.getWorldDirection(cameraDirection);
-            const [dx, dy, dz] = [cameraDirection.x, cameraDirection.y, cameraDirection.z];
-            cameraMove(-dx, -dy, -dz);
-        }
-        if (event.key === 'd') {
-            // 获取物体的右向量
-            let rightVector = new THREE.Vector3(1, 0, 0);
-            rightVector.applyQuaternion(camera.quaternion);
-            const [dx, dy, dz] = rightVector;
-            cameraMove(dx, dy, dz);
-        } else if (event.key === 'a') {
-            // 获取物体的左向量
-            let leftVector = new THREE.Vector3(-1, 0, 0);
-            leftVector.applyQuaternion(camera.quaternion);
-            const [dx, dy, dz] = leftVector
-            cameraMove(dx, dy, dz);
-        }
-        if (event.key === 'h') {
-            camera.position.y += cameraSpeed;
-        }
-    });
-
-    document.addEventListener('wheel', function (event) {
-        const cameraDirection = new THREE.Vector3();
-        camera.getWorldDirection(cameraDirection);
-        const [dx, dy, dz] = [cameraDirection.x, cameraDirection.y, cameraDirection.z].map(x => x * 0.1);
-        console.log("dxdydz", dx, dy, dz);
-        camera.position.x += event.deltaY * -dx;
-        camera.position.y += event.deltaY * -dy;
-        camera.position.z += event.deltaY * -dz;
-    });
-
-    let isDragging = false;
-
-    document.addEventListener('mousedown', function (e) {
-        isDragging = true;
-    });
-    document.addEventListener('mousemove', (event) => {
-        //鼠标左键按下时候，才旋转玩家角色
-        if (isDragging) {
-            camera.rotation.y -= event.movementX / 600;
-        }
-    });
-    document.addEventListener('mouseup', function (e) {
-        isDragging = false;
-    });
-
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-}
 
 function initRenderer() {
     // 渲染器初始化
@@ -272,7 +209,7 @@ function animate() {
 }
 
 function checkAnimation() {
-    if (mixer) mixer.update(deltaTime);
+    mixers.map(mixer => mixer.update(deltaTime));
 }
 
 // 创建一个对象来存储控制参数
@@ -281,19 +218,13 @@ var controls = {
 };
 
 function initAnimation() {
-    // 改变叉车整体缩放，添加gui控制
-
-    gui.add(controls, 'scale', 0, 1).onChange((value) => {
-        models["car"].obj.scale.set(value, value, value);
-    })
-    gui.add(models["car"].obj.rotation, 'y', -3.14, 3.14).step(0.01);
     mixer = new THREE.AnimationMixer(models["car"].obj);
     const clip = THREE.AnimationClip.findByName(models["car"].obj.animations, "Cube_13_2|Cube_13_2Action");
-    const AnimationAction = mixer.clipAction(clip).play();
+    const AnimationAction = mixer.clipAction(clip);
     AnimationAction.clampWhenFinished = true;
     AnimationAction.loop = THREE.LoopOnce;
     AnimationAction.play();
-
+    console.log(AnimationAction);
     // 添加动画播放完成事件监听器
     mixer.addEventListener('finished', function (event) {
         // 当动画播放完成时，切换动画播放方向并重新播放动画
@@ -306,7 +237,7 @@ function initAnimation() {
             animationAction.timeScale = 1; // 正向播放
         }
 
-        animationAction.paused = false; // 重新播放动画
+        // animationAction.paused = false; // 重新播放动画
     });
 }
 
@@ -325,13 +256,16 @@ function Test() {
 }
 
 function test01() {
-    initAnimation();
+    // initAnimation();
     // gui.add(camera, 'fov', 1, 100).onChange(updateCamera).name("FOV").step(0.1);
     // 经过测试厂房的最佳高度为-200
     models["Warahouse"].obj.position.y = -200;
     models["car"].obj.position.x = 200;
     models["car"].obj.scale.set(0.2, 0.2, 0.2);
     models["保温炉"].obj.position.set(200, 0, -100);
+    models["car"].rotate(Math.PI / 2);
+    models["car"].moveStraight(-100);
+    models["car"].animationPlay("Cube_13_2|Cube_13_2Action");
     gui.add(models["保温炉"].obj.position, 'x', -200, 200).name("保温炉x坐标").onChange((value) => {
         models["保温炉"].obj.position.x = value;
     })
