@@ -8,7 +8,7 @@ import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { abs } from 'three/examples/jsm/nodes/Nodes.js';
 import { initCamera } from "./js/camera.js";
-import { AntiVisible, changeGeomtry, ChangeTexture } from './js/visible.js';
+import { AntiVisible, changeGeomtry } from './js/visible.js';
 
 
 
@@ -51,14 +51,11 @@ class LoadModel {
     loadModel(path) {
         const filename = path.split('/').pop();
         const [modelname, tmp] = filename.split('.');
-        console.log(tmp);
         switch (tmp) {
             case 'fbx':
                 this.fbxLoader.load(path, (obj) => {
-                    console.log(obj);
                     models[modelname] = new ModelControler(obj);
                     this.scene.add(obj);
-                    window.obj = obj;
                     // 遍历模型的子对象
                     obj.traverse((child) => {
                         if (child.isMesh) {
@@ -76,11 +73,11 @@ class LoadModel {
                                 child.material.color.copy(randomColor);
                             }
                         }
-                        // if (modelname == "dcc800_0524_1") {
-                        //     // 创建控制器并添加到 GUI 中
-                        //     const folder = gui.addFolder(child.name);
-                        //     folder.add(child, 'visible').name('Visible');
-                        // }
+                        if (modelname == "dcc800_0524_1") {
+                            // 创建控制器并添加到 GUI 中
+                            const folder = gui.addFolder(child.name);
+                            folder.add(child, 'visible').name('Visible');
+                        }
                     });
                 })
                 break;
@@ -122,7 +119,6 @@ class ModelControler {
 
         while (length > 0) {
             await new Promise(resolve => setTimeout(resolve, 1)); // 等待1毫秒
-            console.log(dx, dy, dz);
             this.obj.position.x += this.speed * dx * sign;
             this.obj.position.y += this.speed * dy * sign;
             this.obj.position.z += this.speed * dz * sign;
@@ -158,7 +154,7 @@ class ModelControler {
     }
 }
 
-document.addEventListener("DOMContentLoaded", LoadTHREE())
+LoadTHREE();
 
 function LoadTHREE() {
     // 创建世界
@@ -253,6 +249,7 @@ function Test() {
     const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
     planeMesh.rotation.x = -Math.PI / 2;
     scene.add(planeMesh);
+    document.addEventListener("click", onMouseClick);
     setTimeout(() => {
         test01();
     }, 2000);
@@ -264,6 +261,8 @@ async function test01() {
     changeGeomtry(models);
     // ChangeTexture(models);
     PositionAdd("行车");
+    console.log(models["dcc800_0524_1"].obj);
+    dfs(models["dcc800_0524_1"].obj);
     // 经过测试厂房的最佳高度为-200
     models["Warahouse"].obj.position.y = -200;
     models["car"].obj.position.x = 200;
@@ -292,4 +291,53 @@ function PositionAdd(name) {
     gui.add(controls, 'scale', 0, 1).name(name + "缩放").step(0.01).onChange((value) => {
         models[name].obj.scale.set(value, value, value);
     })
+}
+
+function onMouseClick(event) {
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    // 计算鼠标点击位置的归一化坐标
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    // 更新射线投射器的方向
+    raycaster.setFromCamera(mouse, camera);
+
+    // 执行射线投射
+    const intersects = raycaster.intersectObjects(scene.children);
+
+    // 如果有物体被点击到，处理点击事件
+    const clickedObject = intersects[0].object;
+
+    // 在这里添加处理点击物体的代码，例如显示详细信息等
+    console.log(clickedObject);
+    highlightObject(clickedObject);
+
+}
+
+// 高亮显示点击到的物体
+function highlightObject(object) {
+    // 将原始材质保存下来，以便恢复
+    const originalMaterial = object.material;
+
+    // 创建高亮材质
+    const highlightMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+
+    // 将物体的材质替换为高亮材质
+    object.material = highlightMaterial;
+
+    // 1秒后恢复原始材质
+    setTimeout(() => {
+        object.material = originalMaterial;
+    }, 1000);
+}
+
+function dfs(obj) {
+    if (obj.children.length == 0) {
+        console.log(obj.name);
+        return;
+    }
+    for (let child of obj.children) {
+        dfs(child);
+    }
 }
