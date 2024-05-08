@@ -8,7 +8,7 @@ import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { abs } from 'three/examples/jsm/nodes/Nodes.js';
 import { initCamera } from "./js/camera.js";
-import { AntiVisible } from './js/visible.js';
+import { AntiVisible, changeGeomtry, ChangeTexture } from './js/visible.js';
 
 
 
@@ -23,12 +23,14 @@ const mixers = [];
 // const modelPath = ['./models/LK/dcc800_0524_1.fbx', './models/LK/factory1.obj', './models/LK/Warahouse.fbx', './models/LK/上部防护罩.fbx', './models/LK/侧面围挡+门.fbx', './models/LK/保温炉.fbx', './models/LK/压射杆后端2 1.fbx', './models/LK/压射杆后端2.fbx', './models/LK/压铸机_喷雾机器人.fbx', './models/LK/尾板+哥林柱2.fbx', './models/LK/活塞杆后端.fbx', './models/LK/给汤机_坐标调整.fbx'];
 const modelPath =
     [
+        "./models/行车.fbx",
+        "./models/模具.fbx",
         './models/LK/dcc800_0524_1.fbx',
         // './models/LK/factory1.obj',
-        // './models/LK/Warahouse.fbx',
-        // "./models/LK/保温炉.fbx",
+        './models/LK/Warahouse.fbx',
+        "./models/LK/保温炉.fbx",
         // "./models/LK/给汤机_坐标调整.fbx",
-        // "./models/car.fbx",
+        "./models/car.fbx",
         // "./models/给汤机_animation.fbx",d
         // "./models/test.fbx"
     ]
@@ -74,12 +76,11 @@ class LoadModel {
                                 child.material.color.copy(randomColor);
                             }
                         }
-                        if (modelname == "dcc800_0524_1") {
-                            console.log(child);
-                            // 创建控制器并添加到 GUI 中
-                            const folder = gui.addFolder(child.name);
-                            folder.add(child, 'visible').name('Visible');
-                        }
+                        // if (modelname == "dcc800_0524_1") {
+                        //     // 创建控制器并添加到 GUI 中
+                        //     const folder = gui.addFolder(child.name);
+                        //     folder.add(child, 'visible').name('Visible');
+                        // }
                     });
                 })
                 break;
@@ -193,7 +194,7 @@ function initRenderer() {
 }
 function initLight() {
     // 环境光
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
 
     // 平行光源
@@ -260,12 +261,17 @@ function Test() {
 async function test01() {
     console.log(models);
     AntiVisible(models["dcc800_0524_1"].obj);
+    changeGeomtry(models);
+    // ChangeTexture(models);
+    PositionAdd("行车");
     // 经过测试厂房的最佳高度为-200
     models["Warahouse"].obj.position.y = -200;
     models["car"].obj.position.x = 200;
     models["car"].obj.scale.set(0.2, 0.2, 0.2);
     models["保温炉"].obj.position.set(200, 0, -100);
-    // await models["car"].moveStraight(100, [1, 0, 0]);
+    await models["模具"].moveStraight(433, [0, -1, 0]); // 这是一个上模具的动作
+    await models["模具"].moveStraight(433, [0, 1, 0]); // 这是一个下模具的动作
+    // await models["car"].moveStraight(100, [1, 0, 0]);s
     // await models["car"].rotate(Math.PI / 2);
     // models["car"].animationPlay("Cube_13_2|Cube_13_2Action");
     // models["car"].moveStraight(100, [0, 0, -1]);
@@ -277,10 +283,10 @@ function PositionAdd(name) {
     gui.add(models[name].obj.position, 'x', -200, 200).name(name + "x坐标").onChange((value) => {
         models[name].obj.position.x = value;
     })
-    gui.add(models[name].obj.position, 'y', -200, 200).name(name + "y坐标").onChange((value) => {
+    gui.add(models[name].obj.position, 'y', -200, 2000).name(name + "y坐标").step(1).onChange((value) => {
         models[name].obj.position.y = value;
     })
-    gui.add(models[name].obj.position, 'z', -200, 200).name(name + "z坐标").onChange((value) => {
+    gui.add(models[name].obj.position, 'z', -100, 100).name(name + "z坐标").step(1).onChange((value) => {
         models[name].obj.position.z = value;
     })
     gui.add(controls, 'scale', 0, 1).name(name + "缩放").step(0.01).onChange((value) => {
