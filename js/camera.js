@@ -9,7 +9,9 @@ export function initCamera() {
         0.1,
         4000
     );
-    camera.position.set(100, 100, 100);
+    // camera.position.set(731, 100, 153); // 观测给汤机动画
+    camera.rotation.set(0, 1.5, 0); // 观测给汤机动画
+    camera.position.set(418, 90, 24);
 
     // ? 监听鼠标、键盘事件
     let cameraSpeed = 10;
@@ -47,6 +49,9 @@ export function initCamera() {
         if (event.key === 'h') {
             camera.position.y += cameraSpeed;
         }
+        if (event.key === 'g') {
+            camera.position.y -= cameraSpeed;
+        }
     });
 
     document.addEventListener('wheel', function (event) {
@@ -79,5 +84,6 @@ export function initCamera() {
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
+    window.camera = camera;
     return camera;
 }

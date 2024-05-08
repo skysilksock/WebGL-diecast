@@ -8,6 +8,7 @@ import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { abs } from 'three/examples/jsm/nodes/Nodes.js';
 import { initCamera } from "./js/camera.js";
+import { AntiVisible } from './js/visible.js';
 
 
 
@@ -23,11 +24,13 @@ const mixers = [];
 const modelPath =
     [
         './models/LK/dcc800_0524_1.fbx',
-        './models/LK/factory1.obj',
-        './models/LK/Warahouse.fbx',
-        "./models/LK/保温炉.fbx",
-        "./models/LK/给汤机_坐标调整.fbx",
-        "./models/car.fbx"
+        // './models/LK/factory1.obj',
+        // './models/LK/Warahouse.fbx',
+        // "./models/LK/保温炉.fbx",
+        // "./models/LK/给汤机_坐标调整.fbx",
+        // "./models/car.fbx",
+        // "./models/给汤机_animation.fbx",d
+        // "./models/test.fbx"
     ]
 const models = {};
 
@@ -53,6 +56,7 @@ class LoadModel {
                     console.log(obj);
                     models[modelname] = new ModelControler(obj);
                     this.scene.add(obj);
+                    window.obj = obj;
                     // 遍历模型的子对象
                     obj.traverse((child) => {
                         if (child.isMesh) {
@@ -69,6 +73,12 @@ class LoadModel {
                                 // 如果模型只有一个材质，则直接设置该材质的颜色
                                 child.material.color.copy(randomColor);
                             }
+                        }
+                        if (modelname == "dcc800_0524_1") {
+                            console.log(child);
+                            // 创建控制器并添加到 GUI 中
+                            const folder = gui.addFolder(child.name);
+                            folder.add(child, 'visible').name('Visible');
                         }
                     });
                 })
@@ -136,7 +146,9 @@ class ModelControler {
 
     animationPlay(name) {
         if (mixers.indexOf(this.mixer) == -1) mixers.push(this.mixer);
+        console.log(mixers);
         const clip = THREE.AnimationClip.findByName(this.obj.animations, name);
+        console.log(clip);
         if (!clip) throw new Error("Animation clip not found");
         const action = this.mixer.clipAction(clip); // 返回动画操作器对象
         action.clampWhenFinished = true; // 动画结束后保持最后一帧
@@ -242,26 +254,36 @@ function Test() {
     scene.add(planeMesh);
     setTimeout(() => {
         test01();
-    }, 5000);
+    }, 2000);
 }
 
 async function test01() {
-    // initAnimation();
-    // gui.add(camera, 'fov', 1, 100).onChange(updateCamera).name("FOV").step(0.1);
+    console.log(models);
+    AntiVisible(models["dcc800_0524_1"].obj);
     // 经过测试厂房的最佳高度为-200
     models["Warahouse"].obj.position.y = -200;
     models["car"].obj.position.x = 200;
     models["car"].obj.scale.set(0.2, 0.2, 0.2);
     models["保温炉"].obj.position.set(200, 0, -100);
-    await models["car"].moveStraight(100, [1, 0, 0]);
-    await models["car"].rotate(Math.PI / 2);
+    // await models["car"].moveStraight(100, [1, 0, 0]);
+    // await models["car"].rotate(Math.PI / 2);
     // models["car"].animationPlay("Cube_13_2|Cube_13_2Action");
-    models["car"].moveStraight(100, [0, 0, -1]);
-    models["保温炉"].moveStraight(100, [0, 1, 0]);
-    gui.add(models["保温炉"].obj.position, 'x', -200, 200).name("保温炉x坐标").onChange((value) => {
-        models["保温炉"].obj.position.x = value;
+    // models["car"].moveStraight(100, [0, 0, -1]);
+
+    // PositionAdd("给汤机_animation");
+}
+
+function PositionAdd(name) {
+    gui.add(models[name].obj.position, 'x', -200, 200).name(name + "x坐标").onChange((value) => {
+        models[name].obj.position.x = value;
     })
-    gui.add(models["保温炉"].obj.position, 'y', -200, 200).name("保温炉y坐标").onChange((value) => {
-        models["保温炉"].obj.position.y = value;
+    gui.add(models[name].obj.position, 'y', -200, 200).name(name + "y坐标").onChange((value) => {
+        models[name].obj.position.y = value;
+    })
+    gui.add(models[name].obj.position, 'z', -200, 200).name(name + "z坐标").onChange((value) => {
+        models[name].obj.position.z = value;
+    })
+    gui.add(controls, 'scale', 0, 1).name(name + "缩放").step(0.01).onChange((value) => {
+        models[name].obj.scale.set(value, value, value);
     })
 }
