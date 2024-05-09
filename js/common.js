@@ -55,11 +55,11 @@ export class LoadModel {
                                 child.material.color.copy(randomColor);
                             }
                         }
-                        if (modelname == "dcc800_0524_1") {
-                            // 创建控制器并添加到 GUI 中
-                            const folder = gui.addFolder(child.name);
-                            folder.add(child, 'visible').name('Visible');
-                        }
+                        // if (modelname == "dcc800_0524_1") {
+                        //     // 创建控制器并添加到 GUI 中
+                        //     const folder = gui.addFolder(child.name);
+                        //     folder.add(child, 'visible').name('Visible');
+                        // }
                     });
                 })
                 break;
@@ -123,7 +123,7 @@ export class ModelControler {
     }
 
 
-    animationPlay(name) {
+    async animationPlay(name, wait = true) {
         if (mixers.indexOf(this.mixer) == -1) mixers.push(this.mixer);
         console.log(mixers);
         const clip = THREE.AnimationClip.findByName(this.obj.animations, name);
@@ -133,6 +133,7 @@ export class ModelControler {
         action.clampWhenFinished = true; // 动画结束后保持最后一帧
         action.loop = THREE.LoopOnce; // 只播放一次
         action.play();
+        if (wait) await new Promise(resolve => setTimeout(resolve, clip.duration * 1000));
     }
 }
 

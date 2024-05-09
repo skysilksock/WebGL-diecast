@@ -25,8 +25,8 @@ const modelPath =
         './models/LK/Warahouse.fbx',
         "./models/LK/保温炉.fbx",
         // "./models/LK/给汤机_坐标调整.fbx",
-        "./models/car.fbx",
-        // "./models/给汤机_animation.fbx",d
+        // "./models/car.fbx",
+        "./models/给汤机_animation.fbx",
         // "./models/test.fbx"
     ]
 
@@ -114,15 +114,21 @@ function Test() {
 }
 
 async function test01() {
+    console.log(models);
     AntiVisible(models["dcc800_0524_1"].obj);
     changeGeomtry(models);
+    dfs(models["dcc800_0524_1"].obj, "");
+
+    PositionAdd("给汤机_animation");
     // ChangeTexture(models);
     PositionAdd("行车");
     console.log(models["dcc800_0524_1"].obj);
-    dfs(models["dcc800_0524_1"].obj, "");
     console.log(models);
+
     // models["ÇÐ³ý-À­Éì151"].moveStraight(-30);
-    models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(100, [0, 1, 0])
+    await models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(10, [0, 1, 0])
+    await models["给汤机_animation"].animationPlay("骨架|骨架Action");
+    await models["给汤机_animation"].rotate(Math.PI / 4);
     // 经过测试厂房的最佳高度为-200
     models["Warahouse"].obj.position.y = -200;
     models["car"].obj.position.x = 200;
@@ -139,13 +145,13 @@ async function test01() {
 }
 
 function PositionAdd(name) {
-    gui.add(models[name].obj.position, 'x', -200, 200).name(name + "x坐标").onChange((value) => {
+    gui.add(models[name].obj.position, 'x', -100, 100).name(name + "x坐标").step(1).onChange((value) => {
         models[name].obj.position.x = value;
     })
-    gui.add(models[name].obj.position, 'y', -200, 2000).name(name + "y坐标").step(1).onChange((value) => {
+    gui.add(models[name].obj.position, 'y', 40, 100).name(name + "y坐标").step(1).onChange((value) => {
         models[name].obj.position.y = value;
     })
-    gui.add(models[name].obj.position, 'z', -100, 100).name(name + "z坐标").step(1).onChange((value) => {
+    gui.add(models[name].obj.position, 'z', -200, -80).name(name + "z坐标").step(1).onChange((value) => {
         models[name].obj.position.z = value;
     })
     gui.add(controls, 'scale', 0, 1).name(name + "缩放").step(0.01).onChange((value) => {
@@ -190,7 +196,7 @@ function highlightObject(object) {
     // 1秒后恢复原始材质
     setTimeout(() => {
         object.material = originalMaterial;
-    }, 1000); a
+    }, 1000);
 }
 
 const controlMachine = [

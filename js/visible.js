@@ -10,13 +10,15 @@ const antiVisble = [
 
 const scaleChange = {
     "模具": 0.2,
-    "行车": 0.15
+    "行车": 0.15,
+    "给汤机_animation": 0.01
 }
 
 const positionChange = {
     "模具": [4, 476, -20],
     // "模具": [4, 43, -20], // 模具安装位置
-    "行车": [4, 520, -20]
+    "行车": [4, 520, -20],
+    "给汤机_animation": [30, 62, -98]
 }
 
 const TextureLoader = new THREE.TextureLoader();
