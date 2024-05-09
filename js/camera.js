@@ -10,7 +10,7 @@ export function initCamera() {
         4000
     );
     // camera.position.set(731, 100, 153); // 观测给汤机动画
-    camera.rotation.set(0, 1.5, 0); // 观测给汤机动画
+    camera.rotation.set(0, 1.5, 0);
     camera.position.set(418, 90, 24);
 
     // ? 监听鼠标、键盘事件

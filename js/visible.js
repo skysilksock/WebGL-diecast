@@ -9,12 +9,16 @@ const antiVisble = [
 ]
 
 const scaleChange = {
+    "car": 0.2,
     "模具": 0.2,
     "行车": 0.15,
     "给汤机_animation": 0.01
 }
 
 const positionChange = {
+    "保温炉": [200, 0, -100],
+    "car": [200, 0, 0],
+    "Warahouse": [0, -200, 0],
     "模具": [4, 476, -20],
     // "模具": [4, 43, -20], // 模具安装位置
     "行车": [4, 520, -20],

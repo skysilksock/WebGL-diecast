@@ -123,7 +123,7 @@ export class ModelControler {
     }
 
 
-    async animationPlay(name, wait = true) {
+    async animationPlay(name, reverse = false, wait = true) {
         if (mixers.indexOf(this.mixer) == -1) mixers.push(this.mixer);
         console.log(mixers);
         const clip = THREE.AnimationClip.findByName(this.obj.animations, name);
@@ -133,7 +133,12 @@ export class ModelControler {
         action.clampWhenFinished = true; // 动画结束后保持最后一帧
         action.loop = THREE.LoopOnce; // 只播放一次
         action.play();
-        if (wait) await new Promise(resolve => setTimeout(resolve, clip.duration * 1000));
+        console.log(clip);
+        if (wait) await new Promise(resolve => setTimeout(resolve, (clip.duration + 1.5) * 1000));
+        if (reverse) {
+            // 反转动画方向
+            action.timeScale = -1;
+        }
     }
 }
 

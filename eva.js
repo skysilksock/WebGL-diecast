@@ -127,13 +127,13 @@ async function test01() {
 
     // models["ÇÐ³ý-À­Éì151"].moveStraight(-30);
     await models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(10, [0, 1, 0])
-    await models["给汤机_animation"].animationPlay("骨架|骨架Action");
+    CameraSet([146, 70, -135], [0, 2, 0]);
+    await models["给汤机_animation"].animationPlay("骨架|骨架Action", true);
     await models["给汤机_animation"].rotate(Math.PI / 4);
+    await models["给汤机_animation"].animationPlay("骨架|骨架Action", true);
+    camera.rotation.set(0, 1.5, 0);
+    camera.position.set(418, 90, 24);
     // 经过测试厂房的最佳高度为-200
-    models["Warahouse"].obj.position.y = -200;
-    models["car"].obj.position.x = 200;
-    models["car"].obj.scale.set(0.2, 0.2, 0.2);
-    models["保温炉"].obj.position.set(200, 0, -100);
     await models["模具"].moveStraight(433, [0, -1, 0]); // 这是一个上模具的动作
     await models["模具"].moveStraight(433, [0, 1, 0]); // 这是一个下模具的动作
     // await models["car"].moveStraight(100, [1, 0, 0]);s
@@ -157,6 +157,11 @@ function PositionAdd(name) {
     gui.add(controls, 'scale', 0, 1).name(name + "缩放").step(0.01).onChange((value) => {
         models[name].obj.scale.set(value, value, value);
     })
+}
+
+function CameraSet(pos, rotate) {
+    camera.position.set(pos[0], pos[1], pos[2]);
+    camera.rotation.set(rotate[0], rotate[1], rotate[2]);
 }
 
 function onMouseClick(event) {
