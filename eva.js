@@ -121,8 +121,8 @@ async function test01() {
     console.log(models["dcc800_0524_1"].obj);
     dfs(models["dcc800_0524_1"].obj, "");
     console.log(models);
-    models["Í¹Ì¨-À­Éì10"].moveStraight(-30);
-    models["ÇÐ³ý-À­Éì151"].moveStraight(-30);
+    // models["ÇÐ³ý-À­Éì151"].moveStraight(-30);
+    models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(100, [0, 1, 0])
     // 经过测试厂房的最佳高度为-200
     models["Warahouse"].obj.position.y = -200;
     models["car"].obj.position.x = 200;
@@ -173,7 +173,6 @@ function onMouseClick(event) {
     for (let clickedObject of intersects) {
         console.log(clickedObject);
         highlightObject(clickedObject.object);
-        break;
     }
 }
 
@@ -191,16 +190,19 @@ function highlightObject(object) {
     // 1秒后恢复原始材质
     setTimeout(() => {
         object.material = originalMaterial;
-    }, 1000);
+    }, 1000); a
 }
 
 const controlMachine = [
-    "Í¹Ì¨-À­Éì10", // 中板
-    "ÇÐ³ý-À­Éì151", // 尾板哥林柱
+    "Í¹Ì¨-À­Éì10", //  前板 网格
+    "ÇÐ³ý-À­Éì151", // 尾板哥林柱 网格
+    "PRESTIGE_DCC800ÖÐ°å_20", // 中板 集合
+
 ]
 
 function dfs(obj, cur) {
     if (obj.children.length == 0) {
+        // 捕捉网格
         if (controlMachine.indexOf(obj.name) != -1) {
             models[obj.name] = new ModelControler(obj);
         }
@@ -208,6 +210,10 @@ function dfs(obj, cur) {
     }
     for (let child of obj.children) {
         dfs(child, cur + obj.name + "->");
+        // 捕捉集合
+        if (controlMachine.indexOf(obj.name) != -1) {
+            models[obj.name] = new ModelControler(obj);
+        }
     }
 }
 

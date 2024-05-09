@@ -12,6 +12,7 @@ let renderer = null;
 const gui = new GUI();
 const mixers = [];
 const models = {};
+window.models = models;
 
 camera = initCamera();
 scene = new THREE.Scene();
@@ -54,11 +55,11 @@ export class LoadModel {
                                 child.material.color.copy(randomColor);
                             }
                         }
-                        // if (modelname == "dcc800_0524_1") {
-                        //     // 创建控制器并添加到 GUI 中
-                        //     const folder = gui.addFolder(child.name);
-                        //     folder.add(child, 'visible').name('Visible');
-                        // }
+                        if (modelname == "dcc800_0524_1") {
+                            // 创建控制器并添加到 GUI 中
+                            const folder = gui.addFolder(child.name);
+                            folder.add(child, 'visible').name('Visible');
+                        }
                     });
                 })
                 break;
