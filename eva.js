@@ -19,14 +19,16 @@ import { models, mixers, scene, camera, renderer, gui } from './js/common.js';
 const modelPath =
     [
         "./models/行车.fbx",
-        "./models/模具.fbx",
         './models/LK/dcc800_0524_1.fbx',
         // './models/LK/factory1.obj',
         './models/LK/Warahouse.fbx',
         "./models/LK/保温炉.fbx",
         // "./models/LK/给汤机_坐标调整.fbx",
-        // "./models/car.fbx",
+        "./models/car.fbx",
         "./models/给汤机_animation.fbx",
+        "./models/产品.fbx",
+        "./models/模具1.fbx",
+        "./models/模具2.fbx"
         // "./models/test.fbx"
     ]
 
@@ -51,8 +53,17 @@ function initLight() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
 
+    // // 点光
+    // const pointLight = new THREE.PointLight(0xffffff, 1);
+    // gui.add(pointLight, 'intensity', 0, 10);
+    // gui.add(pointLight, 'distance', 0, 1000);
+    // gui.add(pointLight.position, 'x', -100, 100);
+    // gui.add(pointLight.position, 'y', -100, 1000);
+    // gui.add(pointLight.position, 'z', -100, 1000);
+    // scene.add(pointLight);
+
     // 平行光源
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // 第一个参数是颜色，第二个参数是光照强度
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 3); // 第一个参数是颜色，第二个参数是光照强度
     directionalLight.position.set(1, 1, 1); // 设置光源位置
     scene.add(directionalLight);
     gui.add(directionalLight, 'intensity', 0, 10).name("光照强度");
@@ -107,10 +118,8 @@ function Test() {
     const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
     planeMesh.rotation.x = -Math.PI / 2;
     scene.add(planeMesh);
-    document.addEventListener("click", onMouseClick);
-    setTimeout(() => {
-        test01();
-    }, 2000);
+    // document.addEventListener("click", onMouseClick);a
+    setTimeout(test01, 3000);
 }
 
 async function test01() {
@@ -119,39 +128,54 @@ async function test01() {
     changeGeomtry(models);
     dfs(models["dcc800_0524_1"].obj, "");
 
-    PositionAdd("给汤机_animation");
-    // ChangeTexture(models);
-    PositionAdd("行车");
-    console.log(models["dcc800_0524_1"].obj);
-    console.log(models);
-
-    // models["ÇÐ³ý-À­Éì151"].moveStraight(-30);
-    await models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(10, [0, 1, 0])
+    models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(-20);
+    models["模具2"].moveStraight(20, [0, 0, 1]);
+    models["产品"].obj.visible = false;
+    // 给汤
     CameraSet([146, 70, -135], [0, 2, 0]);
     await models["给汤机_animation"].animationPlay("骨架|骨架Action", true);
     await models["给汤机_animation"].rotate(Math.PI / 4);
     await models["给汤机_animation"].animationPlay("骨架|骨架Action", true);
     camera.rotation.set(0, 1.5, 0);
     camera.position.set(418, 90, 24);
-    // 经过测试厂房的最佳高度为-200
-    await models["模具"].moveStraight(433, [0, -1, 0]); // 这是一个上模具的动作
-    await models["模具"].moveStraight(433, [0, 1, 0]); // 这是一个下模具的动作
+
+    // 压铸
+    await models["模具1"].moveStraight(200, [0, -1, 0]);
+    models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(20);
+    models["模具2"].moveStraight(20, [0, 0, -1]);
+
+    await new Promise(resolve => setTimeout(resolve, 2000)); // 模拟压铸动作
+    models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(-20);
+    models["模具2"].moveStraight(20, [0, 0, 1]);
+    models["产品"].obj.visible = true;
+
+    PositionAdd("产品");
+
+    await models["产品"].moveStraight(60, [0, 1, 0]);
+    await models["产品"].moveStraight(100, [-1, 0, 0]);
+    await models["产品"].moveStraight(100, [0, -1, 0]);
+
+    await models["car"].rotate(-Math.PI / 2);
+    await models["car"].moveStraight(165, [0, 0, -1]);
+    models["car"].animationPlay("Cube_13_2|Cube_13_2Action");
+    models["产品"].moveStraight(100, [0, 1, 0]);
+    PositionAdd("car");
+
+    // 叉走产品
     // await models["car"].moveStraight(100, [1, 0, 0]);s
     // await models["car"].rotate(Math.PI / 2);
     // models["car"].animationPlay("Cube_13_2|Cube_13_2Action");
     // models["car"].moveStraight(100, [0, 0, -1]);
-
-    // PositionAdd("给汤机_animation");
 }
 
 function PositionAdd(name) {
-    gui.add(models[name].obj.position, 'x', -100, 100).name(name + "x坐标").step(1).onChange((value) => {
+    gui.add(models[name].obj.position, 'x', -100, 200).name(name + "x坐标").step(1).onChange((value) => {
         models[name].obj.position.x = value;
     })
-    gui.add(models[name].obj.position, 'y', 40, 100).name(name + "y坐标").step(1).onChange((value) => {
+    gui.add(models[name].obj.position, 'y', -200, 200).name(name + "y坐标").step(1).onChange((value) => {
         models[name].obj.position.y = value;
     })
-    gui.add(models[name].obj.position, 'z', -200, -80).name(name + "z坐标").step(1).onChange((value) => {
+    gui.add(models[name].obj.position, 'z', -100, 200).name(name + "z坐标").step(1).onChange((value) => {
         models[name].obj.position.z = value;
     })
     gui.add(controls, 'scale', 0, 1).name(name + "缩放").step(0.01).onChange((value) => {
