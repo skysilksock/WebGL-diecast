@@ -9,6 +9,7 @@ const antiVisble = [
 ]
 
 const scaleChange = {
+    "Warahouse": 0.4,
     "产品": 0.15,
     "car": 0.2,
     "行车": 0.15,
@@ -18,10 +19,10 @@ const scaleChange = {
 }
 
 const positionChange = {
+    "Warahouse": [0, -60, -60],
     "产品": [7, 40, -14],
-    "保温炉": [200, 0, -100],
+    "保温炉": [100, 0, -200],
     "car": [-100, 0, 200],
-    "Warahouse": [0, -200, 0],
     // "行车": [4, 520, -20], // 适配厂房高度
     "行车": [4, 306, -20], // 合理高度
     "给汤机_animation": [30, 62, -98],

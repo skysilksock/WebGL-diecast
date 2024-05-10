@@ -20,28 +20,25 @@ const modelPath =
     [
         "./models/行车.fbx",
         './models/LK/dcc800_0524_1.fbx',
-        // './models/LK/factory1.obj',
         './models/LK/Warahouse.fbx',
         "./models/LK/保温炉.fbx",
-        // "./models/LK/给汤机_坐标调整.fbx",
         "./models/car.fbx",
         "./models/给汤机_animation.fbx",
         "./models/产品.fbx",
         "./models/模具1.fbx",
-        "./models/模具2.fbx"
-        // "./models/test.fbx"
+        "./models/模具2.fbx",
     ]
 
 
 document.addEventListener('DOMContentLoaded', LoadTHREE);
 
-function LoadTHREE() {
+async function LoadTHREE() {
     // 灯光
     initLight();
     // 天空盒纹理加载
     // initSkyBox();
     // 加载模型
-    initModels();
+    await initModels();
     // 一些测试代码
     Test();
     // 帧渲染
@@ -52,15 +49,6 @@ function initLight() {
     // 环境光
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
-
-    // // 点光
-    // const pointLight = new THREE.PointLight(0xffffff, 1);
-    // gui.add(pointLight, 'intensity', 0, 10);
-    // gui.add(pointLight, 'distance', 0, 1000);
-    // gui.add(pointLight.position, 'x', -100, 100);
-    // gui.add(pointLight.position, 'y', -100, 1000);
-    // gui.add(pointLight.position, 'z', -100, 1000);
-    // scene.add(pointLight);
 
     // 平行光源
     const directionalLight = new THREE.DirectionalLight(0xffffff, 3); // 第一个参数是颜色，第二个参数是光照强度
@@ -83,7 +71,7 @@ function initSkyBox() {
     )
 }
 
-function initModels() {
+async function initModels() {
     // ? 路径稳定后通过数组传入，现在写死
     const loader = new LoadModel(scene);
     for (let path of modelPath) {
@@ -119,7 +107,7 @@ function Test() {
     planeMesh.rotation.x = -Math.PI / 2;
     scene.add(planeMesh);
     // document.addEventListener("click", onMouseClick);a
-    setTimeout(test01, 3000);
+    setTimeout(test01, 5000);
 }
 
 async function test01() {
@@ -157,15 +145,18 @@ async function test01() {
 
     await models["car"].rotate(-Math.PI / 2);
     await models["car"].moveStraight(165, [0, 0, -1]);
-    models["car"].animationPlay("Cube_13_2|Cube_13_2Action");
-    models["产品"].moveStraight(100, [0, 1, 0]);
-    PositionAdd("car");
-
-    // 叉走产品
-    // await models["car"].moveStraight(100, [1, 0, 0]);s
-    // await models["car"].rotate(Math.PI / 2);
-    // models["car"].animationPlay("Cube_13_2|Cube_13_2Action");
-    // models["car"].moveStraight(100, [0, 0, -1]);
+    await Promise.all([
+        models["car"].animationPlay("Cube_13_2|Cube_13_2Action", true),
+        models["产品"].moveStraight(68, [0, 1, 0], 950)
+    ]);
+    await Promise.all([
+        models["car"].moveStraight(220, [0, 0, -1]),
+        models["产品"].moveStraight(220, [0, 0, -1])
+    ])
+    await Promise.all([
+        models["car"].animationPlay("Cube_13_2|Cube_13_2Action", true),
+        models["产品"].moveStraight(68, [0, -1, 0], 850)
+    ]);
 }
 
 function PositionAdd(name) {
@@ -175,7 +166,7 @@ function PositionAdd(name) {
     gui.add(models[name].obj.position, 'y', -200, 200).name(name + "y坐标").step(1).onChange((value) => {
         models[name].obj.position.y = value;
     })
-    gui.add(models[name].obj.position, 'z', -100, 200).name(name + "z坐标").step(1).onChange((value) => {
+    gui.add(models[name].obj.position, 'z', -800, 200).name(name + "z坐标").step(1).onChange((value) => {
         models[name].obj.position.z = value;
     })
     gui.add(controls, 'scale', 0, 1).name(name + "缩放").step(0.01).onChange((value) => {

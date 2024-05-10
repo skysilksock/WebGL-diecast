@@ -14,6 +14,10 @@ const mixers = [];
 const models = {};
 window.models = models;
 
+const textureObject = [
+    "猴头", "立方体", "立方体001"
+]
+
 camera = initCamera();
 scene = new THREE.Scene();
 scene.add(camera);
@@ -77,12 +81,12 @@ export class LoadModel {
 export class ModelControler {
     constructor(obj, speed = 0.1) {
         this.obj = obj;
-        this.speed = speed;
+        speed = speed;
         this.mixer = new THREE.AnimationMixer(obj);
         this.space = 1;
     }
 
-    async moveStraight(length, vec3 = null) {
+    async moveStraight(length, vec3 = null, time = 200) {
         if (!length) throw new Error("Length not provided");
         let dx, dy, dz;
         if (!vec3) {
@@ -98,13 +102,14 @@ export class ModelControler {
 
         const sign = Math.sign(length);
         length = Math.abs(length);
+        const speed = length / time;
 
         while (length > 0) {
             await new Promise(resolve => setTimeout(resolve, 1)); // 等待1毫秒
-            this.obj.position.x += this.speed * dx * sign;
-            this.obj.position.y += this.speed * dy * sign;
-            this.obj.position.z += this.speed * dz * sign;
-            length -= this.speed;
+            this.obj.position.x += speed * dx * sign;
+            this.obj.position.y += speed * dy * sign;
+            this.obj.position.z += speed * dz * sign;
+            length -= speed;
         }
     }
 
