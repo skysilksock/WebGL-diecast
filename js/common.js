@@ -41,6 +41,7 @@ export class LoadModel {
             case 'fbx':
                 this.fbxLoader.load(path, (obj) => {
                     models[modelname] = new ModelControler(obj);
+                    console.log(obj);
                     this.scene.add(obj);
                     // 遍历模型的子对象
                     obj.traverse((child) => {

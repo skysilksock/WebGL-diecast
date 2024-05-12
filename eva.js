@@ -18,8 +18,10 @@ import { models, mixers, scene, camera, renderer, gui } from './js/common.js';
 
 const modelPath =
     [
+        // "./models/给汤机_坐标调整_--.fbx",
         "./models/行车.fbx",
         './models/LK/dcc800_0524_1.fbx',
+        // './models/LK/dcc800.glb',
         './models/LK/Warahouse.fbx',
         "./models/LK/保温炉.fbx",
         "./models/car.fbx",
@@ -106,70 +108,96 @@ function Test() {
     const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
     planeMesh.rotation.x = -Math.PI / 2;
     scene.add(planeMesh);
-    // document.addEventListener("click", onMouseClick);a
+    // document.addEventListener("click", onMouseClick); // 点击高亮物体
     setTimeout(test01, 5000);
 }
 
+const actions = {
+    "给汤": async function geitang() {
+        console.log("给汤");
+        // 给汤
+        CameraSet([146, 70, -135], [0, 2, 0]);
+        await models["给汤机_animation"].animationPlay("骨架|骨架Action", true);
+        await models["给汤机_animation"].rotate(Math.PI / 4);
+        await models["给汤机_animation"].animationPlay("骨架|骨架Action", true);
+        camera.rotation.set(0, 1.5, 0);
+        camera.position.set(537, 120, 24);
+    },
+    "开模": function kaimo() {
+        console.log("开模");
+        models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(-20);
+        models["模具2"].moveStraight(20, [0, 0, 1]);
+    },
+    "上模具": async function shangmou() {
+        console.log("上模具");
+        await models["模具1"].moveStraight(124, [0, -1, 0]);
+    },
+    "合模": async function hemo() {
+        console.log("合模");
+        models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(20);
+        models["模具2"].moveStraight(20, [0, 0, -1]);
+    },
+    "压铸": function () {
+        console.log("压铸");
+        models["产品"].obj.visible = true;
+    },
+    "产品取出": async function chanpinquchu() {
+        console.log("产品取出");
+        await models["产品"].moveStraight(60, [0, 1, 0]);
+        await models["产品"].moveStraight(100, [-1, 0, 0]);
+        await models["产品"].moveStraight(100, [0, -1, 0]);
+    },
+    "叉车运送产品": async function chacheyunsong() {
+        console.log("叉车运送产品");
+        await models["car"].rotate(-Math.PI / 2);
+        await models["car"].moveStraight(165, [0, 0, -1]);
+        await Promise.all([
+            models["car"].animationPlay("Cube_13_2|Cube_13_2Action", true),
+            models["产品"].moveStraight(68, [0, 1, 0], 950)
+        ]);
+        await Promise.all([
+            models["car"].moveStraight(220, [0, 0, -1]),
+            models["产品"].moveStraight(220, [0, 0, -1])
+        ])
+        await Promise.all([
+            models["car"].animationPlay("Cube_13_2|Cube_13_2Action", true),
+            models["产品"].moveStraight(68, [0, -1, 0], 850)
+        ]);
+    }
+}
+
+const situationControl = {
+    curStep: 0,
+    functions: Object.values(actions),
+    steps: [0, 1, 2, 3, 4, 1, 5, 6],
+    executeCode: function () {
+        if (this.curStep >= this.steps.length) alert("执行完成，妖魔鬼怪快离开！");
+        console.log(this.functions);
+        this.functions[this.steps[this.curStep]]();
+        this.curStep++;
+    }
+}
+
 async function test01() {
-    console.log(models);
-    AntiVisible(models["dcc800_0524_1"].obj);
-    changeGeomtry(models);
-    dfs(models["dcc800_0524_1"].obj, "");
-
-    models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(-20);
-    models["模具2"].moveStraight(20, [0, 0, 1]);
-    models["产品"].obj.visible = false;
-    // 给汤
-    CameraSet([146, 70, -135], [0, 2, 0]);
-    await models["给汤机_animation"].animationPlay("骨架|骨架Action", true);
-    await models["给汤机_animation"].rotate(Math.PI / 4);
-    await models["给汤机_animation"].animationPlay("骨架|骨架Action", true);
-    camera.rotation.set(0, 1.5, 0);
-    camera.position.set(418, 90, 24);
-
-    // 压铸
-    await models["模具1"].moveStraight(200, [0, -1, 0]);
-    models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(20);
-    models["模具2"].moveStraight(20, [0, 0, -1]);
-
-    await new Promise(resolve => setTimeout(resolve, 2000)); // 模拟压铸动作
-    models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(-20);
-    models["模具2"].moveStraight(20, [0, 0, 1]);
-    models["产品"].obj.visible = true;
-
-    PositionAdd("产品");
-
-    await models["产品"].moveStraight(60, [0, 1, 0]);
-    await models["产品"].moveStraight(100, [-1, 0, 0]);
-    await models["产品"].moveStraight(100, [0, -1, 0]);
-
-    await models["car"].rotate(-Math.PI / 2);
-    await models["car"].moveStraight(165, [0, 0, -1]);
-    await Promise.all([
-        models["car"].animationPlay("Cube_13_2|Cube_13_2Action", true),
-        models["产品"].moveStraight(68, [0, 1, 0], 950)
-    ]);
-    await Promise.all([
-        models["car"].moveStraight(220, [0, 0, -1]),
-        models["产品"].moveStraight(220, [0, 0, -1])
-    ])
-    await Promise.all([
-        models["car"].animationPlay("Cube_13_2|Cube_13_2Action", true),
-        models["产品"].moveStraight(68, [0, -1, 0], 850)
-    ]);
+    console.log(models); // 调试代码
+    gui.add(situationControl, "executeCode").name("执行代码");
+    AntiVisible(models["dcc800_0524_1"].obj); // 隐藏模型的部分零件
+    changeGeomtry(models); // 调整场景中模型的缩放位置
+    dfs(models["dcc800_0524_1"].obj, ""); // 拿到所需的主机的部分零件集合
+    models["产品"].obj.visible = false; // 初始时产品不可见
 }
 
 function PositionAdd(name) {
     gui.add(models[name].obj.position, 'x', -100, 200).name(name + "x坐标").step(1).onChange((value) => {
         models[name].obj.position.x = value;
     })
-    gui.add(models[name].obj.position, 'y', -200, 200).name(name + "y坐标").step(1).onChange((value) => {
+    gui.add(models[name].obj.position, 'y', -200, 300).name(name + "y坐标").step(1).onChange((value) => {
         models[name].obj.position.y = value;
     })
     gui.add(models[name].obj.position, 'z', -800, 200).name(name + "z坐标").step(1).onChange((value) => {
         models[name].obj.position.z = value;
     })
-    gui.add(controls, 'scale', 0, 1).name(name + "缩放").step(0.01).onChange((value) => {
+    gui.add(controls, 'scale', 4, 10).name(name + "缩放").step(0.01).onChange((value) => {
         models[name].obj.scale.set(value, value, value);
     })
 }
@@ -199,6 +227,7 @@ function onMouseClick(event) {
     for (let clickedObject of intersects) {
         console.log(clickedObject);
         highlightObject(clickedObject.object);
+        break;
     }
 }
 
