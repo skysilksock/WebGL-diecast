@@ -15,8 +15,10 @@ const models = {};
 window.models = models;
 
 const textureObject = [
-    "猴头", "立方体", "立方体001"
+    "猴头", "立方体", "立方体001", "dragon"
 ]
+
+const spriteLoader = new THREE.TextureLoader();
 
 camera = initCamera();
 scene = new THREE.Scene();
@@ -41,11 +43,12 @@ export class LoadModel {
             case 'fbx':
                 this.fbxLoader.load(path, (obj) => {
                     models[modelname] = new ModelControler(obj);
-                    console.log(obj);
+                    console.log(obj.name, obj);
                     this.scene.add(obj);
                     // 遍历模型的子对象
                     obj.traverse((child) => {
                         if (child.isMesh) {
+                            console.log(child.name);
                             // 随机生成颜色
                             const randomColor = new THREE.Color(Math.random() * 0xffffff);
 
@@ -69,6 +72,13 @@ export class LoadModel {
                 })
                 break;
             case 'glb':
+                this.gltfLoader.load(path, (obj) => {
+                    console.log(obj.scene);
+                    models[modelname] = new ModelControler(obj.scene);
+                    this.scene.add(obj.scene);
+                })
+                break;
+            case 'gltf':
                 this.gltfLoader.load(path, (obj) => {
                     console.log(obj.scene);
                     models[modelname] = new ModelControler(obj.scene);
@@ -134,10 +144,17 @@ export class ModelControler {
         console.log(mixers);
         const clip = THREE.AnimationClip.findByName(this.obj.animations, name);
         console.log(clip);
+        console.log(JSON.stringify(clip));
+        for (let track of clip.tracks) {
+            console.log(track.times[track.times.length - 1]);
+        }
         if (!clip) throw new Error("Animation clip not found");
         const action = this.mixer.clipAction(clip); // 返回动画操作器对象
         action.clampWhenFinished = true; // 动画结束后保持最后一帧
         action.loop = THREE.LoopOnce; // 只播放一次
+        // 设置动画播放时间
+        this.mixer.time = 0;
+        clip.resetDuration();
         action.play();
         console.log(clip);
         if (wait) await new Promise(resolve => setTimeout(resolve, (clip.duration + 1.5) * 1000));
@@ -148,4 +165,4 @@ export class ModelControler {
     }
 }
 
-export { scene, camera, gui, models, mixers, renderer };
+export { scene, camera, gui, models, mixers, renderer, spriteLoader };

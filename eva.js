@@ -11,17 +11,20 @@ import { abs } from 'three/examples/jsm/nodes/Nodes.js';
 // my module
 import { AntiVisible, changeGeomtry } from './js/visible.js';
 import { LoadModel, ModelControler } from './js/common.js';
-import { models, mixers, scene, camera, renderer, gui } from './js/common.js';
+import { models, mixers, scene, camera, renderer, gui, spriteLoader } from './js/common.js';
 
 
 
 
 const modelPath =
     [
-        // "./models/给汤机_坐标调整_--.fbx",
+        // "./models/给汤机.fbx",
+        "./models/dragon.fbx",
+        // "./models/给汤机NLA2.glb",
+        "./models/关节1.fbx",
         "./models/行车.fbx",
         './models/LK/dcc800_0524_1.fbx',
-        // './models/LK/dcc800.glb',
+        './models/LK/dcc800.glb',
         './models/LK/Warahouse.fbx',
         "./models/LK/保温炉.fbx",
         "./models/car.fbx",
@@ -77,7 +80,7 @@ async function initModels() {
     // ? 路径稳定后通过数组传入，现在写死
     const loader = new LoadModel(scene);
     for (let path of modelPath) {
-        loader.loadModel(path);
+        await loader.loadModel(path);
     }
 }
 
@@ -99,6 +102,65 @@ const controls = {
     scale: 1
 };
 
+// 魁札尔科亚特尔控制类
+class HumanModelControler extends ModelControler {
+    constructor(obj, speed = 0.1) {
+        super(obj, speed);
+        this.action = null;
+    }
+    // 要求非阻塞，循环播放
+    animationPlay(name) {
+        if (mixers.indexOf(this.mixer) == -1) mixers.push(this.mixer);
+        const clip = THREE.AnimationClip.findByName(this.obj.animations, name);
+        for (let track of clip.tracks) {
+            console.log(track.times[track.times.length - 1]);
+        }
+        if (!clip) throw new Error("Animation clip not found");
+        const action = this.mixer.clipAction(clip); // 返回动画操作器对象
+        action.clampWhenFinished = true; // 动画结束后保持最后一帧
+        // 设置循环播放
+        action.play();
+        return action;
+    }
+
+    async moveWithAnimation(length, vec3 = null, animationName = null, time = 200) {
+        if (!length) throw new Error("Length not provided");
+        let dx, dy, dz;
+        if (!vec3) {
+            const direction = new THREE.Vector3();
+            this.obj.getWorldDirection(direction);
+            dx = direction.x;
+            dy = direction.y;
+            dz = direction.z;
+        } else {
+            [dx, dy, dz] = vec3;
+        }
+
+        const sign = Math.sign(length);
+        length = Math.abs(length);
+        const speed = length / time;
+
+        // 播放动画
+        if (animationName) {
+            if (this.action) { this.action.paused = false; }
+            // 动画设置循环播放           
+            else { this.action = this.animationPlay(animationName); }
+        }
+
+        while (length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1)); // 等待1毫秒
+            this.obj.position.x += speed * dx * sign;
+            this.obj.position.y += speed * dy * sign;
+            this.obj.position.z += speed * dz * sign;
+            length -= speed;
+        }
+        if (this.action) {
+            this.action.paused = true;
+        }
+    }
+
+}
+
 // ! 测试
 
 function Test() {
@@ -108,45 +170,119 @@ function Test() {
     const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
     planeMesh.rotation.x = -Math.PI / 2;
     scene.add(planeMesh);
+    // setTimeout(test02, 4000);
     // document.addEventListener("click", onMouseClick); // 点击高亮物体
-    setTimeout(test01, 5000);
+    setTimeout(test01, 15000);
 }
 
+function test02() {
+    console.log(models);
+    PositionAdd("关节1");
+    gui.add(situationControl, "executeCode").name("执行代码");
+}
+
+const spritePath = ["./models/texture/MrShen.jpg"]
+let spriteIdx = 0;
+let sprite;
 const actions = {
+    // 0
+    "精灵": async function () {
+        spriteLoader.load(
+            spritePath[spriteIdx],
+            function (texture) {
+                // 创建精灵贴图材质
+                const material = new THREE.SpriteMaterial({ map: texture });
+
+                // 创建精灵贴图对象
+                sprite = new THREE.Sprite(material);
+                // 添加精灵贴图到场景中
+                scene.add(sprite);
+                sprite.scale.set(100, 75, 1);
+                sprite.position.set(50, 120, 150);
+                // gui.add(sprite.position, "x", 0, 200);
+                // gui.add(sprite.position, "y", 0, 200);
+                // gui.add(sprite.position, "z", 0, 200);
+            }
+        );
+        spriteIdx++;
+        spriteIdx %= spritePath.length;
+    },
+    // 1
+    "报工1": async function baogong1() {
+        await models["dragon"].moveWithAnimation(100, [0, 0, 1], "mixamo.com");
+        models["dragon"].rotate(-Math.PI / 4);
+    },
+    // 2
+    "报工2": async function baogong2() {
+        await models["dragon"].rotate(-Math.PI * 3 / 4);
+        models["dragon"].moveWithAnimation(500, [0, 0, -1], "mixamo.com")
+    },
+    // 3
     "给汤": async function geitang() {
         console.log("给汤");
-        // 给汤
-        CameraSet([146, 70, -135], [0, 2, 0]);
+        CameraSet([146, 70, -135], [0, 2, 0]); // 最佳观赏角度
+        // 消除精灵贴图
+        sprite.visible = false;
+        // 给汤 我的模型
         await models["给汤机_animation"].animationPlay("骨架|骨架Action", true);
         await models["给汤机_animation"].rotate(Math.PI / 4);
         await models["给汤机_animation"].animationPlay("骨架|骨架Action", true);
         camera.rotation.set(0, 1.5, 0);
         camera.position.set(537, 120, 24);
+        // 给汤 公司模型
+        // models["给汤机"].animationPlay("给汤_1");
+        // await new Promise(resolve => setTimeout(resolve, 2000));
+        // models["给汤机"].animationPlay("给汤_2");
+        // await new Promise(resolve => setTimeout(resolve, 2000));
+        // models["给汤机"].animationPlay("给汤_3");
+        // await new Promise(resolve => setTimeout(resolve, 2000));
+        // models["给汤机"].animationPlay("给汤_4");
+        // await new Promise(resolve => setTimeout(resolve, 2000));
+        // models["给汤机"].animationPlay("给汤_5");
     },
+    // 4
+    "喷雾": async function penwu() {
+        if (!models["关节1"]) return;
+        models["关节1"].animationPlay("喷雾_1");
+        // await new Promise(resolve => setTimeout(resolve, 2000));
+        models["关节1"].animationPlay("喷雾_2");
+        // await new Promise(resolve => setTimeout(resolve, 2000));
+        // models["关节1"].animationPlay("喷雾_3_喷雾");
+        // await new Promise(resolve => setTimeout(resolve, 2000));
+        models["关节1"].animationPlay("喷雾_3_喷雾 1");
+        // await new Promise(resolve => setTimeout(resolve, 2000));
+        models["关节1"].animationPlay("喷雾_4");
+    },
+    // 5
     "开模": function kaimo() {
         console.log("开模");
         models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(-20);
         models["模具2"].moveStraight(20, [0, 0, 1]);
     },
+    // 6
     "上模具": async function shangmou() {
         console.log("上模具");
         await models["模具1"].moveStraight(124, [0, -1, 0]);
     },
+    // 7
     "合模": async function hemo() {
         console.log("合模");
         models["PRESTIGE_DCC800ÖÐ°å_20"].moveStraight(20);
         models["模具2"].moveStraight(20, [0, 0, -1]);
     },
+    // 8
     "压铸": function () {
         console.log("压铸");
         models["产品"].obj.visible = true;
     },
+    // 9
     "产品取出": async function chanpinquchu() {
         console.log("产品取出");
         await models["产品"].moveStraight(60, [0, 1, 0]);
         await models["产品"].moveStraight(100, [-1, 0, 0]);
         await models["产品"].moveStraight(100, [0, -1, 0]);
     },
+    // 10
     "叉车运送产品": async function chacheyunsong() {
         console.log("叉车运送产品");
         await models["car"].rotate(-Math.PI / 2);
@@ -168,8 +304,8 @@ const actions = {
 
 const situationControl = {
     curStep: 0,
-    functions: Object.values(actions),
-    steps: [0, 1, 2, 3, 4, 1, 5, 6],
+    functions: Object.values(actions).filter(f => typeof f == "function"),
+    steps: [0, 1, 3, 5, 6, 7, 4, 8, 5, 9, 10, 2],
     executeCode: function () {
         if (this.curStep >= this.steps.length) alert("执行完成，妖魔鬼怪快离开！");
         console.log(this.functions);
@@ -180,24 +316,28 @@ const situationControl = {
 
 async function test01() {
     console.log(models); // 调试代码
+    const human = new HumanModelControler(models["dragon"].obj);
+    models["dragon"] = human; // 绑定人物
     gui.add(situationControl, "executeCode").name("执行代码");
     AntiVisible(models["dcc800_0524_1"].obj); // 隐藏模型的部分零件
     changeGeomtry(models); // 调整场景中模型的缩放位置
     dfs(models["dcc800_0524_1"].obj, ""); // 拿到所需的主机的部分零件集合
     models["产品"].obj.visible = false; // 初始时产品不可见
+    // models["给汤机"].obj.rotation.y = 4.71; // 调整给汤机旋转
+    PositionAdd("保温炉");
 }
 
 function PositionAdd(name) {
-    gui.add(models[name].obj.position, 'x', -100, 200).name(name + "x坐标").step(1).onChange((value) => {
+    gui.add(models[name].obj.position, 'x', -100, 100).name(name + "x坐标").step(1).onChange((value) => {
         models[name].obj.position.x = value;
     })
-    gui.add(models[name].obj.position, 'y', -200, 300).name(name + "y坐标").step(1).onChange((value) => {
+    gui.add(models[name].obj.position, 'y', 0, 100).name(name + "y坐标").step(1).onChange((value) => {
         models[name].obj.position.y = value;
     })
-    gui.add(models[name].obj.position, 'z', -800, 200).name(name + "z坐标").step(1).onChange((value) => {
+    gui.add(models[name].obj.position, 'z', -150, 100).name(name + "z坐标").step(1).onChange((value) => {
         models[name].obj.position.z = value;
     })
-    gui.add(controls, 'scale', 4, 10).name(name + "缩放").step(0.01).onChange((value) => {
+    gui.add(controls, 'scale', 0, 2).name(name + "缩放").step(0.01).onChange((value) => {
         models[name].obj.scale.set(value, value, value);
     })
 }
